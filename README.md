@@ -1,4 +1,4 @@
-apt-get
+apt-get pacman
 ===
 
 ##### Licença GPL3
