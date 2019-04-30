@@ -1,0 +1,147 @@
+#!/bin/bash
+# apt-get fake
+# Um simples wrapper bash para pacman.
+# Autor: Felipe Facundes
+# Telegram: https://t.me/winehq_linux
+# Use: apt-get [options] <command> <args>...
+
+function log_info {
+    echo "$(tput setaf 4)$1$(tput sgr0)" >&2
+}
+function log_warn {
+    echo "$(tput setaf 3)$1$(tput sgr0)" >&2
+}
+function log_error {
+    echo "$(tput setaf 1)ERROR:$(tput sgr0) $1" >&2
+}
+
+function display_help {
+cat <<EOS
+Usage: apt-get [options] <command> <args>...
+  apt-get install <package>
+  apt-get local <file>
+  apt-get search <package>
+  apt-get info <package>
+  apt-get remove <package>
+  apt-get update [args]...
+  apt-get upgrade [args]...
+
+Options:
+  -h | --help		Mostrar esta tela
+  -v | --verbose 	Exibir o comando a ser passado.
+  --yay		        Use yay em vez de pacman.
+  --pacman		    Força o pacman se use_yay estiver ativado
+EOS
+}
+
+CMD='pacman'
+
+# Try to detect if yay is installed
+if hash yay 2>/dev/null; then
+	use_yay=true
+fi
+
+# Try to detect if we are root
+if [ "$(whoami)" != "root" ]; then
+	use_sudo=true
+fi
+
+# Match any [options]
+while :
+do
+	case "$1" in
+		-h | --help)
+			display_help  # Call your function
+			# no shifting needed here, we're done.
+			exit 0
+			;;
+		-v | --verbose)
+			verbose=true
+			shift
+			;;
+		--yay)
+			use_yay=true
+			shift
+			;;
+		--pacman)
+			use_yay=false
+			shift
+			;;
+		--dry-run)
+			dry_run=true
+			shift
+			;;
+		--) # End of all options
+			shift
+			break
+			;;
+		-*)
+			log_error "Unknown option: $1"
+			break
+			;;
+		*)  # No more options
+			break
+			;;
+	esac
+done
+
+# Use yay if use_yay is enabled
+if [ "$use_yay" = true ] ; then
+	CMD='yay'
+	# Disable sudo
+	use_sudo=false
+fi
+
+# Update the $CMD if user_sudo is enabled
+# (and yay is not enabled)
+if [ "$use_sudo" = true ] ; then
+	CMD="sudo $CMD"
+fi
+
+# Match <command> and pass though to pacman
+case "$1" in
+	'install')
+		shift
+		CMD_ARGS="-S $@"
+		;;
+	'local')
+		shift
+		CMD_ARGS="-U $@"
+		;;
+	'search')
+		shift
+		CMD_ARGS="-Ss $@"
+		;;
+	'info')
+		shift
+		CMD_ARGS="-Si $@"
+		;;
+	'update')
+		shift
+		CMD_ARGS="-Syy $@"
+		;;
+	'upgrade')
+		shift
+		CMD_ARGS="-Syyuu $@"
+		;;
+	'remove')
+		shift
+		CMD_ARGS="-Rcs $@"
+		;;
+	*)
+		log_error "Unknown command: $1"
+		exit 1
+		;;
+esac
+
+# echo the whole command if verbose is enabled
+if [ "$verbose" = true ]; then
+	log_info "=> $(tput sgr0)$CMD $CMD_ARGS"
+fi
+
+# Call the command
+if [ "$dry_run" = true ]; then
+	echo "$CMD $CMD_ARGS"
+else
+	$CMD $CMD_ARGS
+fi
