@@ -35,7 +35,7 @@ e depois colocar o conteúdo (apt-get) do `bin` em seu /usr/bin/.
 PATH=$PATH:{PATH_TO_APT_GET}/bin
 ```
 
-## Usage
+## Use
 
 ```
 Use: apt-get [options] <command> <args>...
