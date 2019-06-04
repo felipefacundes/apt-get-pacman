@@ -74,6 +74,7 @@ if [ "$install_yay" = true ]; then
     do_sudo apt-get update --noconfirm
     do_sudo apt-get install yay --noconfirm
 fi
+sudo ln -s /usr/bin/apt-get /usr/bin/apt
 echo "Fim!"
 echo "Entre no nosso grupo do Telegram:"
 echo "https://t.me/winehq_linux"
